@@ -30,7 +30,7 @@
   ```text
   C:\Program Files\7-Zip\7z.exe
   C:\Program Files (x86)\7-Zip\7z.exe
-  D:\Date\7-Zip\7z.exe
+  D:\Data\7-Zip\7z.exe
   ```
 * *若安装在非标准路径，可在脚本内搜索 `find_7zip()` 函数，在 `sevenzip_paths` 列表中直接追加自定义安装路径。*
 
