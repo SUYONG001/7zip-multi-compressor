@@ -15,7 +15,48 @@ import sys
 import re
 import shutil
 from pathlib import Path
-from tqdm import tqdm
+
+# 强制将工作目录锁定为脚本所在文件夹
+os.chdir(Path(__file__).parent.resolve())
+
+# ================= 自动高速安装官方原生 tqdm 并即时加载 =================
+try:
+    from tqdm import tqdm
+except ImportError:
+    print("💡 检测到未安装 tqdm 进度条库，正在通过清华源自动安装原生标准库...")
+    # 调用官方 pip 从清华镜像站高速下载安装官方标准包
+    ret = os.system(f'"{sys.executable}" -m pip install tqdm -i https://pypi.tuna.tsinghua.edu.cn/simple')
+    
+    if ret == 0:
+        try:
+            # 刷新系统模块路径缓存，确保新装的官方标准库能立即被当前进程读取
+            import site
+            import importlib
+            importlib.invalidate_caches()
+            from tqdm import tqdm
+            print("✅ 官方原生 tqdm 库安装成功，已成功载入！\n")
+        except ImportError:
+            tqdm = None
+    else:
+        tqdm = None
+
+    # 仅在无网络导致官方库安装彻底失败时，作为备用防闪退垫底
+    if tqdm is None:
+        print("⚠️ 官方库下载失败（可能当前无网络连接），已切入纯文本兼容模式运行。\n")
+        class DummyTqdm:
+            def __init__(self, *args, **kwargs):
+                pass
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                pass
+            def update(self, *args, **kwargs):
+                pass
+            def set_description(self, *args, **kwargs):
+                pass
+        tqdm = DummyTqdm
+# ==============================================================================
+    from tqdm import tqdm
 
 def strip_quotes(s):
     """去除字符串首尾的单引号或双引号"""
@@ -25,7 +66,7 @@ def strip_quotes(s):
     if s.startswith("'") and s.endswith("'"):
         return s[1:-1]
     return s
-
+    
 def format_size(size_bytes):
     """将字节大小转换为易读的格式 (KB, MB, GB)"""
     if size_bytes == 0:
